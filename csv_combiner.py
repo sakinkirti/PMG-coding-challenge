@@ -26,14 +26,14 @@ class csvCombiner:
 
         # check the number of inputs
         if len(self.files) < 1:
-            raise FileError("No files given to parse.")
+            raise NoFilesError("No files given to parse.")
         elif len(self.files) >= 1:
             # check that given files exist and that they have data
             for file in self.files:
                 if not os.path.exists(file):
-                    raise FileError(f"Could not locate the file: {file}")
+                    raise FileNotFoundError(f"Could not locate the file: {file}")
                 if os.stat(file).st_size == 0:
-                    raise FileError(f"The given file contains no data: {file}")
+                    raise FileSizeError(f"The given file contains no data: {file}")
 
         # combine the csv files
         combined_df = pd.DataFrame()
@@ -58,8 +58,13 @@ class csvCombiner:
 
         sys.stdout.write(self.combined.to_csv())
 
-class FileError(Exception):
+class NoFilesError(Exception):
     pass
+class FileNotFoundError(Exception):
+    pass
+class FileSizeError(Exception):
+    pass
+
 
 def main():
     """
