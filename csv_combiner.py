@@ -18,6 +18,7 @@ class csvCombiner:
         self.files = files
         self.combined = pd.DataFrame()
         self.chunk_size = chunk_size
+        self.testing_flag = False
 
     def combine(self):
         """
@@ -56,15 +57,16 @@ class csvCombiner:
         method to print the csv to the stdout
         """
 
-        sys.stdout.write(self.combined.to_csv())
+        if isinstance(self.combined, pd.DataFrame):
+            sys.stdout.write(self.combined.to_csv())
+            self.testing_flag = True
+        else:
+            raise NoValueError("The incorrect data type is stored. Cannot print.")
 
-class NoFilesError(Exception):
-    pass
-class FileNotFoundError(Exception):
-    pass
-class FileSizeError(Exception):
-    pass
-
+class NoFilesError(Exception): pass
+class FileNotFoundError(Exception): pass
+class FileSizeError(Exception): pass
+class NoValueError(Exception): pass
 
 def main():
     """

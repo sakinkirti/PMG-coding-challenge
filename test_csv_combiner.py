@@ -1,11 +1,12 @@
 import unittest
 import pandas as pd
 import numpy as np
-from csv_combiner import csvCombiner as CC
 
+from csv_combiner import csvCombiner as CC
 from csv_combiner import NoFilesError
 from csv_combiner import FileNotFoundError
 from csv_combiner import FileSizeError
+from csv_combiner import NoValueError
 
 class test_csvCombiner(unittest.TestCase):
     """
@@ -34,20 +35,22 @@ class test_csvCombiner(unittest.TestCase):
 
         # 2+ files given
         combiner.combine()
-        self.assertEqual(combiner.combined, pd.read_csv("test_data/proper_output.csv"))
+        self.assertEqual(len(combiner.combined.columns), 3)
+        self.assertEqual(len(combiner.combined), len(pd.read_csv("test_data/accessories.csv"))+len(pd.read_csv("test_data/clothing.csv"))+len(pd.read_csv("test_data/household_cleaners.csv")))
+        self.assertEqual(len(np.unique(combiner.combined["filename"])), 3)
 
         # only 1 file given
         combiner.files = ["test_data/accessories.csv"]
         combiner.combine()
         self.assertEqual(len(combiner.combined.columns), 3)
         self.assertEqual(len(combiner.combined), len(pd.read_csv("test_data/accessories.csv")))
-        self.assertEqual(np.unique(combiner.combined["Filename"]), "accessories.csv")
+        self.assertEqual(np.unique(combiner.combined["filename"]), "accessories.csv")
 
         # files with different column names
         combiner.files = ["test_data/clothing.csv", "test_data/clothing_cost.csv"]
         combiner.combine()
-        self.assertEqual(len(combiner.combined), len(pd.read_csv("test_data/clothing.csv")))
-        self.assertEqual(len(combiner.combined.columns), 5)
+        self.assertEqual(len(combiner.combined), len(pd.read_csv("test_data/clothing.csv"))+len(pd.read_csv("test_data/clothing_cost.csv")))
+        self.assertEqual(len(combiner.combined.columns), 4)
 
         # test no files input
         combiner.files = []
@@ -58,6 +61,23 @@ class test_csvCombiner(unittest.TestCase):
         self.assertRaises(FileNotFoundError, combiner.combine)
 
         # file with no data
-        combiner.files = ["test_data/empty_file.csv", file for file in proper_files]
+        combiner.files = ["test_data/empty_file.csv", "test_data/accessories.csv", "test_data/clothing.csv", "test_data/household_cleaners.csv"]
         self.assertRaises(FileSizeError, combiner.combine)
 
+    def test_print(self):
+        """
+        method to test the print() method of csvCombiner
+        """
+
+        # initialize
+        combiner = CC(files=["test_data/accessories.csv", "test_data/clothing.csv", "test_data/household_cleaners.csv"], chunk_size=10000)
+
+        # incorrect data type stored
+        combiner.combined = 5
+        self.assertRaises(NoValueError, combiner.print)
+
+        # correct output
+        self.assertFalse(combiner.testing_flag)
+        combiner.combine()
+        combiner.print()
+        self.assertTrue(combiner.testing_flag)
